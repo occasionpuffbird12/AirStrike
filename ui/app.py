@@ -2,8 +2,6 @@
 ui/app.py
 Main application window for AirStrike.
 Assembles all tabs and the shared console output.
-Acts as the glue between all UI tabs — passes shared
-callbacks (device getter, log function) to each tab.
 """
 
 import tkinter as tk
@@ -32,12 +30,12 @@ class AirStrikeApp:
         if not show_disclaimer():
             sys.exit(0)
 
-        # Build console first so tabs can use log()
-        self._build_console()
-
-        # Build the tabbed notebook
+        # Main layout — notebook on top, console on bottom
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill='both', expand=True, padx=5, pady=5)
+
+        # Build console panel (must exist before tabs so log() works)
+        self._build_console()
 
         # Create all tabs — pass shared callbacks between them
         self.device_tab  = DeviceTab(self.notebook, self.log)
@@ -45,7 +43,7 @@ class AirStrikeApp:
         self.capture_tab = CaptureTab(self.notebook, self.device_tab.get_device, self.log)
         self.crack_tab   = CrackTab(self.notebook, self.capture_tab.get_captured_file, self.log)
 
-        # Wire up: when a scan completes, push networks into capture tab
+        # Wire up: when scan completes, auto-push networks into capture tab
         self.scan_tab.on_scan_done = self._push_networks_to_capture
 
         self.log("AirStrike v3.0 ready.")
@@ -54,28 +52,22 @@ class AirStrikeApp:
     def _build_console(self):
         """Build the shared console output panel at the bottom of the window."""
         console_frame = ttk.LabelFrame(self.root, text="Console Output")
-        console_frame.pack(side='bottom', fill='both', expand=False, padx=5, pady=5)
+        console_frame.pack(fill='both', expand=False, padx=5, pady=5)
 
         self.console = scrolledtext.ScrolledText(
-            console_frame, height=10, bg='black', fg='#00ff00'
+            console_frame, height=8, bg='black', fg='#00ff00'
         )
         self.console.pack(fill='both', expand=True, padx=5, pady=5)
 
     def log(self, message):
-        """
-        Write a timestamped message to the console panel and the log file.
-        This is passed as a callback to all tabs and core modules.
-        """
+        """Write a timestamped message to the console and log file."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.insert(tk.END, f"[{timestamp}] {message}\n")
         self.console.see(tk.END)
         logger.info(message)
 
     def _push_networks_to_capture(self):
-        """
-        After a scan, automatically load discovered networks
-        into the capture tab's target dropdown.
-        """
+        """Load discovered networks into the capture tab target dropdown."""
         networks = self.scan_tab.get_networks()
         self.capture_tab.load_targets(networks)
         self.log(f"Loaded {len(networks)} networks into capture tab.")
