@@ -7,6 +7,7 @@ Assembles all tabs and the shared console output.
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 import sys
+import threading
 from datetime import datetime
 
 from utils.disclaimer import show_disclaimer
@@ -132,8 +133,16 @@ class AirStrikeApp:
     def log(self, message):
         """Write a timestamped message to the console and log file."""
         timestamp = datetime.now().strftime("%H:%M:%S")
-        self.console.insert(tk.END, f"[{timestamp}] {message}\n")
-        self.console.see(tk.END)
+
+        def write_console():
+            self.console.insert(tk.END, f"[{timestamp}] {message}\n")
+            self.console.see(tk.END)
+
+        if threading.current_thread() is threading.main_thread():
+            write_console()
+        else:
+            self.root.after(0, write_console)
+
         logger.info(message)
 
     def _push_networks_to_capture(self):

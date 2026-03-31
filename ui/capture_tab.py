@@ -203,11 +203,11 @@ class CaptureTab:
 
     def _update_status(self, text, color):
         """Update the capture status label."""
-        self.capture_status.config(text=text, foreground=color)
+        self.frame.after(0, lambda: self.capture_status.config(text=text, foreground=color))
 
     def _on_handshake_captured(self, filepath):
         """Callback: called when a handshake .cap file is saved."""
-        self.captured_file_path.set(filepath)
+        self.frame.after(0, lambda: self.captured_file_path.set(filepath))
         self.log(f"Handshake saved to: {filepath}")
 
     def _start_auto_capture_assist(self, device, bssid):

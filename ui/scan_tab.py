@@ -131,18 +131,18 @@ class ScanTab:
 
     def _on_network_found(self, bssid, channel, essid, security):
         """Callback: add a newly discovered AP to the networks table."""
-        self.network_tree.insert('', 'end', values=(bssid, channel, essid, security))
+        self.frame.after(0, lambda: self.network_tree.insert('', 'end', values=(bssid, channel, essid, security)))
         self.log(f"Found AP: {essid} [{bssid}] CH{channel} {security}")
 
     def _on_station_found(self, station_mac, bssid, power, probes):
         """Callback: add a newly discovered client to the stations table."""
-        self.station_tree.insert('', 'end', values=(station_mac, bssid, power, probes))
-        self.log(f"Found Station: {station_mac} → {bssid} PWR:{power}")
+        self.frame.after(0, lambda: self.station_tree.insert('', 'end', values=(station_mac, bssid, power, probes)))
+        self.log(f"Found Station: {station_mac} -> {bssid} PWR:{power}")
 
     def _on_scan_complete(self):
         """Callback: called when scan finishes. Pushes networks to capture tab."""
-        self.scan_state.set("Status: Idle")
+        self.frame.after(0, lambda: self.scan_state.set("Status: Idle"))
         self.log("Scan completed.")
         # Notify app.py to load networks into the capture tab target dropdown
         if self.on_scan_done:
-            self.on_scan_done()
+            self.frame.after(0, self.on_scan_done)

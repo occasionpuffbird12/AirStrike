@@ -147,6 +147,10 @@ class CrackTab:
 
     def _append_result(self, text):
         """Append text to the cracking results panel."""
+        self.frame.after(0, lambda: self._append_result_ui(text))
+
+    def _append_result_ui(self, text):
+        """UI-thread helper for writing cracking results."""
         self.crack_results.insert(tk.END, text)
         self.crack_results.see(tk.END)
 
