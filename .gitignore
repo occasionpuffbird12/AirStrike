@@ -31,7 +31,6 @@ hashcat.potfile
 *.logfile
 
 # Local wordlists
-rockyou.text
 rockyou.txt
 
 # OS
