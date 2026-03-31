@@ -82,8 +82,9 @@ class CrackTab:
         self.dict_frame.grid_remove()  # Hidden until Dictionary selected
 
         # Start button
-        ttk.Button(self.frame, text="Start Cracking",
-                   command=self.start_cracking).grid(row=4, column=1, padx=5, pady=20)
+        self.start_button = ttk.Button(self.frame, text="Start Cracking",
+                           command=self.start_cracking)
+        self.start_button.grid(row=4, column=1, padx=5, pady=20)
 
         # Results display
         ttk.Label(self.frame, text="Cracking Results:").grid(
@@ -103,13 +104,21 @@ class CrackTab:
             'wordlist': self.wordlist_path.get().strip()
         }
 
-        self.cracker.start_cracking(
+        started = self.cracker.start_cracking(
             handshake_file=self.handshake_path.get().strip(),
             attack_type=self.attack_type.get(),
             options=options,
             on_result=self._append_result,
-            log_callback=self.log
+            log_callback=self.log,
+            on_complete=self._on_crack_complete
         )
+
+        if started:
+            self.start_button.config(state='disabled')
+
+    def _on_crack_complete(self):
+        """Re-enable cracking controls after worker thread exits."""
+        self.frame.after(0, lambda: self.start_button.config(state='normal'))
 
     def _append_result(self, text):
         """Append text to the cracking results panel."""

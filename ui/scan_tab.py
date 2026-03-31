@@ -108,12 +108,12 @@ class ScanTab:
         self.log("Scan stopped.")
 
     def get_networks(self):
-        """Return list of scanned networks as 'BSSID - ESSID' strings."""
+        """Return list of scanned networks as 'BSSID - ESSID - Channel' strings."""
         targets = []
         for item in self.network_tree.get_children():
             values = self.network_tree.item(item)['values']
             if values:
-                targets.append(f"{values[0]} - {values[2]}")
+                targets.append(f"{values[0]} - {values[2]} - CH{values[1]}")
         return targets
 
     def _on_network_found(self, bssid, channel, essid, security):

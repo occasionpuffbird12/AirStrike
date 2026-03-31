@@ -20,6 +20,7 @@ import platform
 from tkinter import messagebox
 from utils.logger import logger
 from utils.validator import validate_length
+from utils.commands import build_privileged_cmd, command_exists
 
 
 # Maps UI charset labels to hashcat mask characters
@@ -36,8 +37,9 @@ class PasswordCracker:
 
     def __init__(self):
         self.system = platform.system()
+        self.cracking = False
 
-    def start_cracking(self, handshake_file, attack_type, options, on_result, log_callback):
+    def start_cracking(self, handshake_file, attack_type, options, on_result, log_callback, on_complete=None):
         """
         Start the password cracking process in a background thread.
 
@@ -52,36 +54,44 @@ class PasswordCracker:
         """
         if self.system != 'Linux':
             messagebox.showinfo("Not Supported", "Password cracking is only supported on Linux.")
-            return
+            return False
 
         if not handshake_file or not os.path.exists(handshake_file):
             messagebox.showwarning("No Handshake", "Please select a valid handshake file.")
-            return
+            return False
 
         if not attack_type:
             messagebox.showwarning("No Attack Type", "Please select an attack type.")
-            return
+            return False
 
+        if self.cracking:
+            messagebox.showinfo("Cracking In Progress", "A cracking task is already running.")
+            return False
+
+        if not command_exists('hashcat'):
+            messagebox.showerror("Missing Tool", "hashcat not found. Please install hashcat.")
+            return False
+
+        self.cracking = True
         thread = threading.Thread(
             target=self._crack_worker,
-            args=(handshake_file, attack_type, options, on_result, log_callback),
+            args=(handshake_file, attack_type, options, on_result, log_callback, on_complete),
             daemon=True
         )
         thread.start()
+        return True
 
-    def _crack_worker(self, handshake_file, attack_type, options, on_result, log_callback):
+    def _crack_worker(self, handshake_file, attack_type, options, on_result, log_callback, on_complete=None):
         """
         Background worker that converts the cap file and runs hashcat.
         """
         try:
-            hccapx_file = handshake_file.replace('.cap', '.hccapx')
-
-            # Convert .cap to hashcat format
+            # Convert capture to a hashcat-compatible format and mode.
             log_callback("Converting handshake file to hashcat format...")
-            self._convert_cap(handshake_file, hccapx_file)
+            hash_file, hash_mode = self._convert_cap(handshake_file)
 
             # Build the hashcat command based on attack type
-            cmd = self._build_command(attack_type, options, hccapx_file)
+            cmd = self._build_command(attack_type, options, hash_file, hash_mode)
             if not cmd:
                 return
 
@@ -97,9 +107,20 @@ class PasswordCracker:
                     log_callback("Password found! Check results panel.")
             process.wait()
 
+            stderr_text = process.stderr.read() if process.stderr else ""
+            if stderr_text.strip() and process.returncode not in (0, 1):
+                raise RuntimeError(
+                    f"hashcat failed (exit {process.returncode}): {stderr_text.strip().splitlines()[-1]}"
+                )
+
             # Show final cracked results
+            show_cmd = build_privileged_cmd(['hashcat', '-m', hash_mode, hash_file, '--show'])
+            if not show_cmd:
+                log_callback("No privilege escalation tool found (sudo/doas).")
+                return
+
             result = subprocess.run(
-                ['sudo', 'hashcat', '-m', '2500', hccapx_file, '--show'],
+                show_cmd,
                 capture_output=True, text=True
             )
             if result.stdout:
@@ -115,24 +136,53 @@ class PasswordCracker:
             log_callback(f"Error during cracking: {e}")
             logger.error(f"Cracking error: {e}")
             messagebox.showerror("Error", f"Cracking failed: {e}")
+        finally:
+            self.cracking = False
+            if on_complete:
+                try:
+                    on_complete()
+                except Exception:
+                    pass
 
-    def _convert_cap(self, cap_file, hccapx_file):
+    def _convert_cap(self, cap_file):
         """
-        Convert .cap file to .hccapx format for hashcat.
-        Tries cap2hccapx first, falls back to hcxpcapngtool.
-        """
-        try:
-            subprocess.run(
-                ['sudo', 'cap2hccapx', cap_file, hccapx_file],
-                check=True, capture_output=True
-            )
-        except subprocess.CalledProcessError:
-            subprocess.run(
-                ['sudo', 'hcxpcapngtool', cap_file, '-o', hccapx_file],
-                check=True
-            )
+        Convert .cap file into a hashcat-compatible hash file.
 
-    def _build_command(self, attack_type, options, hccapx_file):
+        Returns:
+            (hash_file_path, hash_mode)
+
+        Preferred format is .22000 (mode 22000) via hcxpcapngtool.
+        Falls back to .hccapx (mode 2500) via cap2hccapx.
+        """
+        base, _ = os.path.splitext(cap_file)
+        hash_22000 = f"{base}.22000"
+        hash_hccapx = f"{base}.hccapx"
+
+        if command_exists('hcxpcapngtool'):
+            hcx_cmd = build_privileged_cmd(['hcxpcapngtool', cap_file, '-o', hash_22000])
+            if not hcx_cmd:
+                raise RuntimeError("No privilege escalation tool found (sudo/doas).")
+            result = subprocess.run(hcx_cmd, capture_output=True, text=True)
+            if result.returncode not in (0, 1):
+                logger.debug(f"hcxpcapngtool exited with code {result.returncode}: {result.stderr.strip()}")
+            if os.path.exists(hash_22000) and os.path.getsize(hash_22000) > 0:
+                return hash_22000, '22000'
+
+        if command_exists('cap2hccapx'):
+            cap2hccapx_cmd = build_privileged_cmd(['cap2hccapx', cap_file, hash_hccapx])
+            if not cap2hccapx_cmd:
+                raise RuntimeError("No privilege escalation tool found (sudo/doas).")
+            result = subprocess.run(cap2hccapx_cmd, capture_output=True, text=True)
+            if result.returncode not in (0, 1):
+                logger.debug(f"cap2hccapx exited with code {result.returncode}: {result.stderr.strip()}")
+            if os.path.exists(hash_hccapx) and os.path.getsize(hash_hccapx) > 0:
+                return hash_hccapx, '2500'
+
+        raise RuntimeError(
+            "No converter found. Install hcxtools (hcxpcapngtool) or aircrack-ng-utils (cap2hccapx)."
+        )
+
+    def _build_command(self, attack_type, options, hash_file, hash_mode):
         """
         Build the hashcat command based on attack type and options.
         Returns the command list, or None if options are invalid.
@@ -148,21 +198,21 @@ class PasswordCracker:
             mask = charset * int(min_len)
 
             if min_len == max_len:
-                return ['sudo', 'hashcat', '-m', '2500', hccapx_file, '-a', '3', mask]
+                return build_privileged_cmd(['hashcat', '-m', hash_mode, hash_file, '-a', '3', mask])
             else:
-                return [
-                    'sudo', 'hashcat', '-m', '2500', hccapx_file, '-a', '3',
+                return build_privileged_cmd([
+                    'hashcat', '-m', hash_mode, hash_file, '-a', '3',
                     '--increment',
                     f'--increment-min={min_len}',
                     f'--increment-max={max_len}',
                     mask
-                ]
+                ])
 
         elif attack_type == 'Dictionary':
             wordlist = options.get('wordlist', '')
             if not wordlist or not os.path.exists(wordlist):
                 messagebox.showerror("Error", "Please select a valid wordlist file.")
                 return None
-            return ['sudo', 'hashcat', '-m', '2500', hccapx_file, '-a', '0', wordlist]
+            return build_privileged_cmd(['hashcat', '-m', hash_mode, hash_file, '-a', '0', wordlist])
 
         return None

@@ -65,8 +65,15 @@ class DeviceTab:
         devices = self.monitor.get_devices()
         self.device_combo['values'] = devices
         if devices:
-            self.device_combo.set(devices[0])
-            info = self.monitor.get_device_info(devices[0])
+            selected = devices[0]
+            for dev in devices:
+                info = self.monitor.get_device_info(dev)
+                if "Mode:Monitor" in info:
+                    selected = dev
+                    break
+
+            self.device_combo.set(selected)
+            info = self.monitor.get_device_info(selected)
             self.device_info.delete(1.0, tk.END)
             self.device_info.insert(1.0, info)
 

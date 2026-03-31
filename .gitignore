@@ -13,11 +13,26 @@ env/
 airstrike.log
 
 # Captured files
+/captures/
 /tmp/airstrike_scan*
 /tmp/handshake_*
 *.cap
 *.hccapx
+*.22000
+*.hc22000
 *.pcap
+*.kismet.csv
+*.kismet.netxml
+
+# Hashcat runtime files
+hashcat.potfile
+*.restore
+*.out
+*.logfile
+
+# Local wordlists
+rockyou.text
+rockyou.txt
 
 # OS
 .DS_Store

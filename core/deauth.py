@@ -20,6 +20,7 @@ import time
 import platform
 from utils.logger import logger
 from utils.validator import validate_device, validate_bssid, validate_packet_count
+from utils.commands import build_privileged_cmd, command_exists
 
 
 class DeauthAttack:
@@ -43,13 +44,24 @@ class DeauthAttack:
             log_callback("Deauth attacks are only supported on Linux.")
             return
 
+        if not command_exists('aireplay-ng'):
+            log_callback("aireplay-ng not found. Install aircrack-ng package.")
+            return
+
         if not validate_device(device): return
         if not validate_bssid(bssid):   return
         if not validate_packet_count(packet_count): return
 
         try:
+            deauth_cmd = build_privileged_cmd(
+                ['aireplay-ng', '--deauth', packet_count, '-a', bssid, device]
+            )
+            if not deauth_cmd:
+                log_callback("No privilege escalation tool found (sudo/doas).")
+                return
+
             subprocess.Popen(
-                ['sudo', 'aireplay-ng', '--deauth', packet_count, '-a', bssid, device],
+                deauth_cmd,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
@@ -73,6 +85,10 @@ class DeauthAttack:
             log_callback("Deauth attacks are only supported on Linux.")
             return
 
+        if not command_exists('aireplay-ng'):
+            log_callback("aireplay-ng not found. Install aircrack-ng package.")
+            return
+
         if not validate_device(device): return
         if not validate_bssid(bssid):   return
 
@@ -81,8 +97,15 @@ class DeauthAttack:
         def deauth_loop():
             while not self._stop_event.is_set():
                 try:
+                    loop_cmd = build_privileged_cmd(
+                        ['aireplay-ng', '--deauth', '5', '-a', bssid, device]
+                    )
+                    if not loop_cmd:
+                        log_callback("No privilege escalation tool found (sudo/doas).")
+                        return
+
                     subprocess.run(
-                        ['sudo', 'aireplay-ng', '--deauth', '5', '-a', bssid, device],
+                        loop_cmd,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                         timeout=2

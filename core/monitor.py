@@ -19,6 +19,7 @@ import re
 import time
 from utils.logger import logger
 from utils.validator import validate_device
+from utils.commands import build_privileged_cmd, command_exists
 
 
 class MonitorController:
@@ -35,8 +36,21 @@ class MonitorController:
         """
         try:
             if self.system == 'Linux':
+                # Prefer `iw dev` for accurate interface listing.
+                if command_exists('iw'):
+                    result = subprocess.run(['iw', 'dev'], capture_output=True, text=True)
+                    devices = re.findall(r'^\s*Interface\s+(\S+)', result.stdout, re.MULTILINE)
+                    if devices:
+                        return devices
+
+                # Fallback for older setups.
                 result = subprocess.run(['iwconfig'], capture_output=True, text=True)
-                devices = re.findall(r'^(\w+)', result.stdout, re.MULTILINE)
+                devices = []
+                for line in result.stdout.splitlines():
+                    if 'no wireless extensions' in line:
+                        continue
+                    if line and not line[0].isspace():
+                        devices.append(line.split()[0])
                 return devices
             else:
                 result = subprocess.run(
@@ -85,13 +99,23 @@ class MonitorController:
         if not validate_device(device):
             return False
 
+        if not command_exists('airmon-ng'):
+            log_callback("airmon-ng not found. Install aircrack-ng package.")
+            return False
+
         try:
             # Kill interfering processes before enabling monitor mode
             log_callback("Killing interfering processes (NetworkManager, wpa_supplicant)...")
-            subprocess.run(['sudo', 'airmon-ng', 'check', 'kill'], check=True)
+            check_kill_cmd = build_privileged_cmd(['airmon-ng', 'check', 'kill'])
+            start_cmd = build_privileged_cmd(['airmon-ng', 'start', device])
+            if not check_kill_cmd or not start_cmd:
+                log_callback("No privilege escalation tool found (sudo/doas).")
+                return False
+
+            subprocess.run(check_kill_cmd, check=True)
             log_callback("Processes killed. Enabling monitor mode...")
 
-            subprocess.run(['sudo', 'airmon-ng', 'start', device], check=True)
+            subprocess.run(start_cmd, check=True)
             self.monitor_mode = True
             logger.info(f"Monitor mode enabled on {device}")
             log_callback(f"Monitor mode enabled on {device}")
@@ -113,8 +137,17 @@ class MonitorController:
         if not validate_device(device):
             return False
 
+        if not command_exists('airmon-ng'):
+            log_callback("airmon-ng not found. Install aircrack-ng package.")
+            return False
+
         try:
-            subprocess.run(['sudo', 'airmon-ng', 'stop', device], check=True)
+            stop_cmd = build_privileged_cmd(['airmon-ng', 'stop', device])
+            if not stop_cmd:
+                log_callback("No privilege escalation tool found (sudo/doas).")
+                return False
+
+            subprocess.run(stop_cmd, check=True)
             self.monitor_mode = False
             logger.info(f"Monitor mode disabled on {device}")
             log_callback(f"Monitor mode disabled on {device}")

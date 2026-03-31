@@ -26,6 +26,7 @@ import time
 import platform
 from utils.logger import logger
 from utils.validator import validate_device
+from utils.commands import build_privileged_cmd, command_exists
 
 
 class NetworkScanner:
@@ -49,6 +50,9 @@ class NetworkScanner:
         if self.scanning:
             return
         if not validate_device(device):
+            return
+        if not command_exists('airodump-ng'):
+            logger.error("airodump-ng not found. Install aircrack-ng package.")
             return
 
         self.scanning = True
@@ -78,8 +82,15 @@ class NetworkScanner:
                 os.remove(csv_path)
 
             # Launch airodump-ng with CSV file output
+            scan_cmd = build_privileged_cmd([
+                'airodump-ng', '--output-format', 'csv', '-w', csv_prefix, device
+            ])
+            if not scan_cmd:
+                logger.error("No privilege escalation tool found (sudo/doas).")
+                return
+
             process = subprocess.Popen(
-                ['sudo', 'airodump-ng', '--output-format', 'csv', '-w', csv_prefix, device],
+                scan_cmd,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
