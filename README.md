@@ -3,10 +3,10 @@
 AirStrike is a Linux desktop application for authorized Wi-Fi security auditing.  
 It provides a guided workflow for:
 
-1. Enabling monitor mode
-2. Scanning nearby access points and stations
-3. Capturing WPA/WPA2 handshakes
-4. Running offline password auditing with hashcat
+1. Enabling monitor mode.
+2. Scanning nearby access points and stations.
+3. Capturing WPA/WPA2 handshakes.
+4. Running offline password auditing with hashcat.
 
 ## Legal Notice
 
