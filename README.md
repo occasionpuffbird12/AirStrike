@@ -41,7 +41,7 @@ sudo apt install -y aircrack-ng hashcat hcxtools
 ## Quick Start
 
 ```bash
-git clone https://github.com/<your-username>/AirStrike.git
+git clone https://github.com/PrathamN4yak/AirStrike.git
 cd AirStrike
 sudo python3 main.py
 ```
